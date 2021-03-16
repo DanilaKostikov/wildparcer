@@ -127,7 +127,7 @@ class Client:
         logger.debug('%s', brand_name)
 
         goods_name = name_block.select_one('span.goods-name')
-        if not brand_name:
+        if not goods_name:
             logger.error(f'no goods_name on {url}')
             return
 
