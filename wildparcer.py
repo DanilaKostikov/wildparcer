@@ -73,15 +73,15 @@ class Client:
         res = res.text
         soup = bs4.BeautifulSoup(res, 'lxml')
         container = soup.select_one('a.pagination-next')
+        text_2 = self.load_page(url_n)
+        self.pars_page(text=text_2)
+        self.save_result()
+        self.result = []
+        logger.debug(url_n)
         while container:
             url = container.get('href')
             url_addition = 'https://www.wildberries.ru'
             url = url_addition + url
-            logger.debug(url_n)
-            text = self.load_page(url_n)
-            self.pars_page(text=text)
-            self.save_result()
-            self.result = []
             return self.load_section(text=url)
         return
 
