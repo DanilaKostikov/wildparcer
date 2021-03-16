@@ -135,38 +135,33 @@ class Client:
 
         logger.debug('%s', goods_name)
 
-        url_addition = 'https://www.wildberries.ru'
-        url = url_addition + url
-        try:
-            res = self.session.get(url=url)
-            res.raise_for_status()
-        except Exception:
-            return
-
-        container = res.text
-        soup = bs4.BeautifulSoup(container, 'lxml')
+        container = block
         if container:
-            container = soup.select_one('div.article')
-            container = container.select_one('span')
-            articul = container.text
+            contatiner = container.get('data-popup-nm-id')
+            articul = contatiner
         else:
             articul = 'Артикула нет'
 
         logger.debug(articul)
 
-        container = soup.select_one('span.final-cost')
+        container = block.select_one('ins.lower-price')
         if container:
             price = container.text.strip()
             price = re.sub("[^0-9]", "", price)
             price = int(price)
         else:
-            price = 'Цены нет'
+            container = block.select_one('span.lower-price')
+            if container:
+                price = container.text.strip()
+                price = re.sub("[^0-9]", "", price)
+                price = int(price)
+            else:
+                price = 'Цены нет'
 
         logger.debug(price)
 
-        container = soup.select_one('a.count-review')
+        container = block.select_one('span.dtList-comments-count.c-text-sm')
         if container:
-            container = container.select_one('span')
             popularity = container.text.strip()
             popularity = re.sub("[^0-9]", "", popularity)
             popularity = int(popularity)
@@ -175,10 +170,11 @@ class Client:
 
         logger.debug(popularity)
 
-        container = soup.select_one('div.product-rating')
+        container = block.select_one('span.c-stars-line-lg.j-stars.stars-line-sm')
         if container:
-            container = container.select_one('span')
-            rating = container.text
+            rating = container.get('class')
+            rating = rating[3]
+            rating = rating[4]
             rating = int(rating)
             rating = rating/5*10
         else:
@@ -203,7 +199,7 @@ class Client:
 
     def save_result(self):
         path = 'C:/Users/DanKos/PycharmProjects/wildparcer/wild.csv'
-        with open(path, 'a') as f:
+        with open(path, 'a', encoding='utf8') as f:
             writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
             for item in self.result:
                 writer.writerow(item)
