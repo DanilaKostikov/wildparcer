@@ -206,16 +206,7 @@ class Client:
             popularity=popularity,
             rating=rating,
         ))
-        url_block = None
-        url = None
-        brand_name = None
-        goods_name = None
-        articul = None
-        price = None
-        popularity = None
-        rating = None
-        container = None
-        gc.collect()
+
         logger.debug('-' * 100)
 
     def save_result(self):
@@ -232,8 +223,6 @@ class Client:
                     writer.writerow(HEADERS)
                     writer.writerow(item)
                     self.number_of_products += 1
-            f = None
-            gc.collect()
         else:
             path = 'C:/Users/DanKos/PycharmProjects/wildparcer/wild' + str(NUMBER_FILE) + '.csv'
             with open(path, 'a', encoding='utf8') as f:
@@ -242,8 +231,6 @@ class Client:
                     writer.writerow(item)
                     self.number_of_products += 1
                 logger.info(f'Товаров сохранено {self.number_of_products}')
-            f = None
-            gc.collect()
 
     def run(self, text: str):
         self.load_global_section(text=text)
