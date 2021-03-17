@@ -7,6 +7,7 @@ import sys
 import time
 import random
 import re
+import gc
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('wb')
@@ -36,6 +37,8 @@ HEADERS = (
     'Оценка',
 )
 
+NUMBER_FILE = 1
+
 class Client:
 
     def __init__(self):
@@ -62,8 +65,7 @@ class Client:
             url_addition = 'https://www.wildberries.ru'
             url = url_addition + url
             logger.info(url)
-            self.load_section(url)
-
+            self.load_section(text=url)
 
     def load_section(self, text: str):
         #time.sleep(random.randrange(0, 200, 1)/100)
@@ -78,10 +80,15 @@ class Client:
         self.save_result()
         self.result = []
         logger.debug(url_n)
-        while container:
+        if container:
             url = container.get('href')
             url_addition = 'https://www.wildberries.ru'
             url = url_addition + url
+            soup = None
+            container = None
+            text_2 = None
+            res = None
+            gc.collect()
             return self.load_section(text=url)
         return
 
@@ -97,6 +104,8 @@ class Client:
         container = soup.select('div.dtList.i-dtList.j-card-item')
         for block in container:
             self.pars_block(block=block)
+        container = None
+        gc.collect()
 
     def pars_block(self, block):
         url_block = block.select_one('a.ref_goods_n_p')
@@ -173,12 +182,15 @@ class Client:
         container = block.select_one('span.c-stars-line-lg.j-stars.stars-line-sm')
         if container:
             rating = container.get('class')
-            rating = rating[3]
-            rating = rating[4]
-            rating = int(rating)
-            rating = rating/5*10
+            try:
+                rating = rating[3]
+                rating = rating[4]
+                rating = int(rating)
+                rating = rating/5*10
+            except Exception:
+                rating = 'Нет отзывов.'
         else:
-            rating = 'Нет отзывов'
+            rating = 'Нет отзывов.'
 
         if popularity == 0:
             rating = 'Нет отзывов.'
@@ -194,17 +206,44 @@ class Client:
             popularity=popularity,
             rating=rating,
         ))
-
+        url_block = None
+        url = None
+        brand_name = None
+        goods_name = None
+        articul = None
+        price = None
+        popularity = None
+        rating = None
+        container = None
+        gc.collect()
         logger.debug('-' * 100)
 
     def save_result(self):
-        path = 'C:/Users/DanKos/PycharmProjects/wildparcer/wild.csv'
-        with open(path, 'a', encoding='utf8') as f:
-            writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
-            for item in self.result:
-                writer.writerow(item)
-                self.number_of_products += 1
-            logger.info(f'Товаров сохранено {self.number_of_products}')
+        global NUMBER_FILE, HEADERS
+        if self.number_of_products >= 200000:
+            NUMBER_FILE += 1
+            self.number_of_products = 0
+            path = 'C:/Users/DanKos/PycharmProjects/wildparcer/wild' + str(NUMBER_FILE) + '.csv'
+            f = open(path, "x")
+            f.close()
+            with open(path, 'w', encoding='utf8') as f:
+                writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
+                for item in self.result:
+                    writer.writerow(HEADERS)
+                    writer.writerow(item)
+                    self.number_of_products += 1
+            f = None
+            gc.collect()
+        else:
+            path = 'C:/Users/DanKos/PycharmProjects/wildparcer/wild' + str(NUMBER_FILE) + '.csv'
+            with open(path, 'a', encoding='utf8') as f:
+                writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
+                for item in self.result:
+                    writer.writerow(item)
+                    self.number_of_products += 1
+                logger.info(f'Товаров сохранено {self.number_of_products}')
+            f = None
+            gc.collect()
 
     def run(self, text: str):
         self.load_global_section(text=text)
